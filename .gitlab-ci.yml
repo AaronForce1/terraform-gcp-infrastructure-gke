@@ -1,0 +1,58 @@
+default:
+  image: docker:20.10
+
+services:
+  - docker:20.10-dind
+    
+# Default output file for Terraform plan
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_HOST: tcp://docker:2376
+  DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_TLS_VERIFY: 1
+  DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  GITLAB_USERNAME: gitlab-ci-token
+  GITLAB_PASSWORD: $CI_JOB_TOKEN
+  CONTAINER_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  AWS_DEFAULT_REGION: ap-southeast-1
+  GITLAB_TOKEN: $CI_JOB_TOKEN
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .terraform
+
+stages:
+  - validate
+  - security review
+
+##################################
+#### ------------------------ ####
+####                          ####
+####      TERRAFORM JOBS      ####
+####         (Linting)        ####
+#### ------------------------ ####
+##################################
+
+## VALIDATE
+validate:
+  stage: validate
+  image: registry.gitlab.com/gitlab-org/terraform-images/stable:latest
+  before_script:
+    - terraform init -backend=false -upgrade
+  script:
+    - gitlab-terraform validate
+
+tfsec:
+  image: 
+    name: wesleydeanflexion/tfsec
+    entrypoint:
+      - '/usr/bin/env'
+      - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/go/bin'
+  stage: security review
+  before_script:
+    - tfsec -v
+  script: tfsec --config-file .tfsec.yml . -f json | tee gl-sast-report.json
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
