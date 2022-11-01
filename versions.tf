@@ -1,24 +1,22 @@
 terraform {
-  required_version = ">= 1.0"
-  experiments      = [module_variable_optional_attrs]
+  required_version = ">= 1.3"
 
   required_providers {
-    aws = {
-      source                = "hashicorp/aws"
-      version               = "~> 4.5"
-      configuration_aliases = [aws.secondary]
+    google = {
+      source   = "hashicorp/google"
+      version  = "~> 4.41"
     }
     gitlab = {
       source  = "gitlabhq/gitlab"
-      version = "~> 3.4"
+      version = "~> 3.18"
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 2.0"
+      version = "~> 2.7"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 2.11.0"
+      version = "~> 2.14"
     }
     kubectl = {
       source  = "gavinbunney/kubectl"
